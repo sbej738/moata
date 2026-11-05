@@ -1,0 +1,12 @@
+.env
+*.db
+*.bak.db
+__pycache__/
+.pytest_cache/
+.venv/
+_backup_*/
+*.db-wal
+*.db-shm
+*.db-journal
+.idea/
+.claude/settings.local.json

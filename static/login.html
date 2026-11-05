@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B6FE8">
+  <title>모아타 로그인</title>
+  <meta name="description" content="모아타(MOATA): 방향이 같으면, 같이 탑니다. 강원대학교 삼척캠퍼스 택시 동승.">
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/static/moata.css">
+  <style>
+    .login-card { position: absolute; left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 30; background: #fff; border-radius: 24px; box-shadow: var(--shadow-sheet); padding: 22px 20px 16px; }
+    .login-logo { display: flex; align-items: center; gap: 12px; }
+    .login-logo .logo-mark { width: 44px; height: 44px; border-radius: 13px; }
+    .login-logo .logo-mark .icon { width: 26px; height: 26px; }
+    .login-logo b { font-size: 24px; letter-spacing: -0.5px; display: block; line-height: 1.2; }
+    .login-logo .tag { font-size: 13px; color: var(--text-2); }
+    .links { display: flex; justify-content: center; gap: 4px; align-items: center; margin-top: 6px; color: var(--text-3); }
+    .foot { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 8px; }
+    .gender { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .gender label { display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px; border: 1px solid var(--input-border); border-radius: 12px; cursor: pointer; font-weight: 500; }
+    .gender input { accent-color: var(--primary); }
+    .gender label:has(input:checked) { border: 2px solid var(--primary); background: var(--primary-soft); color: var(--primary-ink); }
+  </style>
+</head>
+<body class="mobile-app">
+  <div class="phone" id="root">
+    <div class="map" id="map" aria-hidden="true"></div>
+    <main class="login-card" id="card" aria-labelledby="login-title"></main>
+  </div>
+  <script>window.MOATA_APP = 'login';</script>
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/common.js"></script>
+  <script src="/static/login.js"></script>
+</body>
+</html>

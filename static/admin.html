@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B6FE8">
+  <title>모아타 운영</title>
+  <meta name="description" content="모아타 운영 페이지: 24시간 모니터링, 경보, 신고, AI 자동 매칭.">
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/static/moata.css">
+  <style>
+    body { background: #F4F6FA; --btn-h: 42px; }
+    .ops-top { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; padding: 10px 20px; flex-wrap: wrap; }
+    .ops-top .switch { box-shadow: none; border: 1px solid var(--border); }
+    .ops-top .spacer { flex: 1; }
+    .ops-grid { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr) minmax(300px, 380px); gap: 16px; padding: 16px 20px 32px; align-items: start; }
+    @media (max-width: 1200px) { .ops-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .ops-grid .center-col { grid-column: 1 / -1; order: -1; } }
+    @media (max-width: 760px) { .ops-grid { grid-template-columns: minmax(0, 1fr); padding: 12px; } }
+    .box { background: #fff; border: 1px solid var(--border); border-radius: var(--r-card); padding: 14px 16px; }
+    .box + .box { margin-top: 16px; }
+    .box h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .box h2 .count { margin-left: auto; }
+    .ops-map { position: relative; height: 440px; border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); }
+    .ops-map .map { position: absolute; inset: 0; }
+    .ops-map.full { position: fixed; inset: 0; z-index: 300; height: auto; border-radius: 0; border: 0; }
+    .map-full-btn { position: absolute; top: 10px; right: 10px; z-index: 500; background: #fff; box-shadow: var(--shadow-card); }
+    .ops-map.full .map-full-btn { top: 16px; right: 16px; }
+    .drv-card { position: absolute; left: 10px; top: 10px; z-index: 500; width: min(300px, calc(100% - 20px)); background: #fff; border-radius: 14px; box-shadow: var(--shadow-card); padding: 10px 6px 12px 14px; }
+    .ops-map.full .drv-card { left: 16px; top: 16px; }
+    .drv-card .close-btn { width: 32px; height: 32px; }
+    .drv-card .mt4 { margin-top: 4px; }
+    .drv-trip { border-top: 1px solid var(--border); margin: 10px 8px 0 0; padding-top: 10px; }
+    .legend { position: absolute; left: 10px; bottom: 10px; z-index: 500; background: #fff; border-radius: 10px; padding: 6px 10px; font-size: 12px; box-shadow: var(--shadow-card); display: flex; gap: 12px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 16px; }
+    .kpi { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+    .kpi b { display: block; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .kpi span { font-size: 12.5px; color: var(--text-3); }
+    .kpi.bad b { color: var(--danger); }
+    .alert-item { border: 1px solid var(--border); border-left-width: 4px; border-radius: 12px; padding: 10px 12px; }
+    .alert-item + .alert-item { margin-top: 8px; }
+    .alert-item.high { border-left-color: var(--danger); background: var(--danger-bg); }
+    .alert-item.medium { border-left-color: #F79009; background: var(--warn-bg); }
+    .alert-item.low { border-left-color: var(--primary); }
+    .alert-item.info { border-left-color: var(--text-3); }
+    .alert-item .t { font-weight: 700; font-size: 14px; }
+    .alert-item .d { font-size: 13px; color: var(--text-2); margin-top: 2px; word-break: break-word; }
+    .meta { font-size: 12px; color: var(--text-3); }
+    .log { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow: auto; }
+    .log li { padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .log li:last-child { border-bottom: 0; }
+    .chart { width: 100%; height: 140px; }
+    .chart text { font: 10px var(--font); fill: var(--text-3); }
+    select.input.sm, input.input.sm { height: 38px; font-size: 14px; padding: 0 10px; width: auto; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .tbl td, .tbl th { padding: 7px 4px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    .tbl th { color: var(--text-3); font-weight: 500; font-size: 12px; }
+    .list button.item.trip { padding: 8px 10px; border-radius: 12px; }
+    .list button.item.trip:hover { background: #F8FAFC; }
+    .list button.item.trip.on { background: var(--primary-soft); box-shadow: inset 0 0 0 2px var(--primary); }
+    #live .list li { padding: 4px 0; }
+    .flash { animation: flash 1s 3; }
+    @keyframes flash { 50% { background: #FEE4E2; } }
+  </style>
+</head>
+<body>
+  <header class="ops-top" id="top"></header>
+  <main class="ops-grid">
+    <section aria-label="경보와 신고">
+      <div class="box" id="alerts"></div>
+      <div class="box" id="reports"></div>
+    </section>
+    <section class="center-col" aria-label="현황">
+      <div class="ops-map" id="ops-map"><div class="map" id="map" role="application" aria-label="운영 지도"></div>
+        <button class="btn sm outline map-full-btn" id="map-full" aria-pressed="false">전체화면</button>
+        <div class="legend"><span><i style="background:#94A3B8"></i>매칭 대기</span><span><i style="background:#0B6FE8"></i>그룹</span><span><i style="background:#0F172A"></i>기사님</span></div></div>
+      <div class="box mt16" id="live"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="box mt16" id="chart-box"></div>
+    </section>
+    <section aria-label="AI와 운영 제어">
+      <div class="box" id="control"></div>
+      <div class="box" id="ai"></div>
+      <div class="box" id="decisions"></div>
+      <div class="box" id="drivers"></div>
+      <div class="box" id="demo"></div>
+    </section>
+  </main>
+  <script>window.MOATA_APP = 'admin';</script>
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/common.js"></script>
+  <script src="/static/admin.js"></script>
+</body>
+</html>
